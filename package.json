@@ -1,0 +1,20 @@
+{
+  "name": "smart-pickk",
+  "version": "1.0.0",
+  "description": "A takeaway platform for daily needs at reasonable prices.",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shreekar-reddy-sg/Smart-Pickk.git"
+  },
+  "author": "Shreekar Reddy S G",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shreekar-reddy-sg/Smart-Pickk/issues"
+  },
+  "homepage": "https://github.com/shreekar-reddy-sg/Smart-Pickk#readme"
+}
