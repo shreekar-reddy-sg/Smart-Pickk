@@ -2,10 +2,11 @@
   "name": "smart-pickk",
   "version": "1.0.0",
   "description": "A takeaway platform for daily needs at reasonable prices.",
-  "main": "server.js",
+  "main": "./backend/src/server.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./backend/src/server.js",
+    "dev": "nodemon ./backend/src/server.js"
   },
   "repository": {
     "type": "git",
@@ -16,5 +17,12 @@
   "bugs": {
     "url": "https://github.com/shreekar-reddy-sg/Smart-Pickk/issues"
   },
-  "homepage": "https://github.com/shreekar-reddy-sg/Smart-Pickk#readme"
+  "homepage": "https://github.com/shreekar-reddy-sg/Smart-Pickk#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "mongoose": "^9.2.1",
+    "nodemon": "^3.1.11"
+  }
 }
