@@ -4,8 +4,10 @@ const app = express();
 
 app.use(express.json());
 
-import router from "./routes/shop.route.js";
+import shopRouter from "./routes/shop.route.js";
+import productRouter from "./routes/product.route.js";
 
-app.use('/api/shops/',router);
+app.use('/api/shops',shopRouter);
+app.use('/api/products',productRouter);
 
 export default app;

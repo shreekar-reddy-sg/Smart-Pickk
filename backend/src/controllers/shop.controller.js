@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Shop } from "../models/shop.model.js"
 
 const createShop = async (req,res) => {
