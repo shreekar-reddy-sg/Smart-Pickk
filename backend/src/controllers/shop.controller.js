@@ -2,8 +2,16 @@ import { Shop } from "../models/shop.model.js"
 
 const createShop = async (req,res) => {
     try{
-        const shop = await Shop.create(req.body);
-        res.status(201).json({ message: "Shop created successfully"});
+        if(req.user.role !== "shop_owner") {
+            return res.status(403).json({ message: "Only shop owners can create shops" });
+        }
+        const { shopName, location } = req.body;
+        const shop = await Shop.create({
+            shopName,
+            location,
+            owner: req.user.userId
+        });
+        res.status(201).json({ message: "Shop created successfully", shop });
     }
     catch(error) {
         res.status(500).json({ message: "Internal server error"});
@@ -50,8 +58,21 @@ const getNearbyShops = async (req, res) => {
     }
 }
 
+const getMyShops = async (req, res) => {
+    try {
+        if(req.user.role !== "shop_owner") {
+            return res.status(403).json({ message: "Only shop owners can view their shops" });
+        }
+        const shops = await Shop.find({ owner: req.user.userId });
+        res.status(200).json(shops);
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 export {
     createShop,
     fetchShops,
-    getNearbyShops
+    getNearbyShops,
+    getMyShops
 };
