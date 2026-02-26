@@ -13,9 +13,14 @@ const addToCart = async (req, res) => {
       return res.status(404).json({ message: "Menu item not found." });
     }
     let cart = await Cart.findOne({user: req.user.userId});
+    let existingItem = cart.items.find(i => i.menuItem.toString() === menuItemId);
     if (!cart) {
       cart = await Cart.create({ user: req.user.userId, products: [] });
     }
+    else if (existingItem) {
+      existingItem.quantity += quantity || 1;
+      await cart.save();
+    } 
     else {
       cart.items.push({ menuItem: menuItemId, quantity });
       await cart.save();
