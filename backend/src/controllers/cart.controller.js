@@ -1,4 +1,4 @@
-import { Cart } from "../models/cart.model.js";
+import Cart from "../models/cart.model.js";
 import { MenuItem } from "../models/menuitem.model.js";
 
 const addToCart = async (req, res) => {
@@ -38,13 +38,20 @@ const getCart = async(req,res) => {
     if (req.user.role !== "customer") {
       return res.status(403).json({ message: "Only customers can view cart." });
     }
-    const cart = await Cart.findOne({ user: req.user.userId }).populate("items.menuItem");
+    let cart = await Cart.findOne({ user: req.user.userId }).populate("items.menuItem");
+    let total = 0;
+    cart.items.forEach(item => {
+      total += item.menuItem.price * item.quantity;
+    });
+    cart = cart.toObject();
+    cart.total = total;
     if (!cart) {
       return res.status(404).json({ message: "Cart not found." });
     }
     res.status(200).json(cart);
   }
   catch (error) {
+    console.error("GET CART ERROR:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
