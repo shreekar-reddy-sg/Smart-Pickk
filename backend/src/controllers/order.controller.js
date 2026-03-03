@@ -31,3 +31,26 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+export const getMyOrders = async (req, res) => {
+  try {
+    if(req.user.role !== 'customer') {
+      return res.status(403).json({message: 'Only customers can view their orders'});
+    }
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const totalOrders = await Order.countDocuments({ user: req.user.userId });
+    const totalPages = Math.ceil(totalOrders / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+    const orders = await Order.find({ user: req.user.userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("items.menuItem", "name price");
+    res.status(200).json({ totalOrders, totalPages, hasNextPage, hasPrevPage, orders, page, limit });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
