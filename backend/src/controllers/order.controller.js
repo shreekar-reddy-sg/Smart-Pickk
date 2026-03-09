@@ -54,3 +54,68 @@ export const getMyOrders = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+export const getAllOrders = async (req, res) => {
+  try {
+    if (req.user.role !== "shop_owner") {
+      return res.status(403).json({
+        message: "Only shop owners can view all orders",
+      });
+    }
+
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 10);
+    const skip = (page - 1) * limit;
+
+    let filter = { shop: req.user.shopId };
+
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+
+    const totalOrders = await Order.countDocuments(filter);
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    const orders = await Order.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("user", "name email")
+      .populate("items.menuItem", "name price");
+
+    res.status(200).json({
+      totalOrders,
+      totalPages,
+      currentPage: page,
+      hasNextPage,
+      hasPrevPage,
+      orders,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const analytics = async (req , res) => {
+  try {
+    if(req.user.role !== 'shop_owner') {
+      return res.status(403).json({message: 'Only shop owners can access analytics'});
+    }
+    const totalOrders = await Order.countDocuments({ shop: req.user.shopId });
+    const completedOrders = await Order.countDocuments({ shop: req.user.shopId, status: 'completed' });
+    const pendingOrders = await Order.countDocuments({ shop: req.user.shopId, status: 'pending' });
+    const cancelledOrders = await Order.countDocuments({ shop: req.user.shopId, status: 'cancelled' });
+    const completed = await Order.find({ shop: req.user.shopId, status: 'completed' });
+    let totalRevenue = 0;
+    completed.forEach(order => {
+      totalRevenue += order.total;
+    });
+    res.status(200).json({ totalOrders, completedOrders, pendingOrders, cancelledOrders, totalRevenue });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
