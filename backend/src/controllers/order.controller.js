@@ -100,22 +100,105 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-export const analytics = async (req , res) => {
+export const analytics = async (req, res) => {
   try {
-    if(req.user.role !== 'shop_owner') {
-      return res.status(403).json({message: 'Only shop owners can access analytics'});
+    if (req.user.role !== "shop_owner") {
+      return res.status(403).json({
+        message: "Only shop owners can access analytics"
+      });
     }
-    const totalOrders = await Order.countDocuments({ shop: req.user.shopId });
-    const completedOrders = await Order.countDocuments({ shop: req.user.shopId, status: 'completed' });
-    const pendingOrders = await Order.countDocuments({ shop: req.user.shopId, status: 'pending' });
-    const cancelledOrders = await Order.countDocuments({ shop: req.user.shopId, status: 'cancelled' });
-    const completed = await Order.find({ shop: req.user.shopId, status: 'completed' });
+
+    const analyticsData = await Order.aggregate([
+      { $match: { shop: req.user.shopId } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalRevenue: {
+            $sum: {
+              $cond: [
+                { $eq: ["$status", "completed"] },
+                "$total",
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    let totalOrders = 0;
     let totalRevenue = 0;
-    completed.forEach(order => {
-      totalRevenue += order.total;
+
+    let pendingOrders = 0;
+    let preparingOrders = 0;
+    let readyOrders = 0;
+    let completedOrders = 0;
+    let cancelledOrders = 0;
+
+    analyticsData.forEach(item => {
+      totalOrders += item.count;
+
+      if (item._id === "completed") {
+        completedOrders = item.count;
+        totalRevenue = item.totalRevenue;
+      } else if (item._id === "pending") {
+        pendingOrders = item.count;
+      } else if (item._id === "preparing") {
+        preparingOrders = item.count;
+      } else if (item._id === "ready") {
+        readyOrders = item.count;
+      } else if (item._id === "cancelled") {
+        cancelledOrders = item.count;
+      }
     });
-    res.status(200).json({ totalOrders, completedOrders, pendingOrders, cancelledOrders, totalRevenue });
+
+    res.status(200).json({
+      totalOrders,
+      pendingOrders,
+      preparingOrders,
+      readyOrders,
+      completedOrders,
+      cancelledOrders,
+      totalRevenue
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const dailyAnalytics = async (req, res) => {
+  try {
+    if (req.user.role !== "shop_owner") {
+      return res.status(403).json({
+        message: "Only shop owners can access analytics"
+      });
+    }
+    const dailyRevenue = await Order.aggregate([
+  {
+    $match: {
+      shop: req.user.shopId,
+      status: "completed"
+    }
+  },
+  {
+    $group: {
+      _id: {
+        $dateToString: {
+          format: "%Y-%m-%d",
+          date: "$createdAt"
+        }
+      },
+      revenue: { $sum: "$total" }
+    }
+  },
+  {
+    $sort: { _id: 1 }
+  }
+]);
+   res.status(200).json({ dailyRevenue });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };
