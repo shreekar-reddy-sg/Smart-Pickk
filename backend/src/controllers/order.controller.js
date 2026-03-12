@@ -202,3 +202,46 @@ export const dailyAnalytics = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const bestSellingItems = async (req, res) => {
+  try {
+    if (req.user.role !== "shop_owner") {
+      return res.status(403).json({
+        message: "Only shop owners can access analytics"
+      });
+    }
+
+    const bestSellers = await Order.aggregate([
+      { $match: { shop: req.user.shopId, status: "completed" } },
+
+      { $unwind: "$items" },
+
+      {
+        $group: {
+          _id: "$items.menuItem",
+          quantity: { $sum: "$items.quantity" }
+        }
+      },
+
+      { $sort: { quantity: -1 } },
+
+      { $limit: 5 },
+
+      {
+        $lookup: {
+          from: "menuitems",
+          localField: "_id",
+          foreignField: "_id",
+          as: "menuItemDetails"
+        }
+      },
+
+      { $unwind: "$menuItemDetails" }
+    ]);
+
+    res.status(200).json(bestSellers);
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};

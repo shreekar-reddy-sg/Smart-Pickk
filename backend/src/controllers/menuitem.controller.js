@@ -31,6 +31,17 @@ const fetchMenuItems = async (req, res) => {
     }
 }
 
+const searchMenuItems = async (req, res) => {
+    try {
+        const { search } = req.query;
+        const menuItems = await MenuItem.find({ name: { $regex: search, $options: 'i' } });
+        res.status(200).json(menuItems);
+    }
+    catch {
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 export {
-    item,fetchMenuItems
+    item,fetchMenuItems,searchMenuItems
 };
