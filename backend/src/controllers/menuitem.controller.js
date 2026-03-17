@@ -5,17 +5,21 @@ const item = async (req, res) => {
     const { name, description, price, available, shopId, photo } = req.body;
     try {
         if(req.user.role !== 'shop_owner') {
-            return res.status(403).json({ message: "You are not authorized to add menu items." });
+            const err = new Error("Only shop owners can add menu items");
+            err.statusCode = 403;
+            throw err;
         }
         const shop = await Shop.findById(shopId);
         if (!shop || shop.owner.toString() !== req.user.userId) {
-            return res.status(403).json({ message: "You are not authorized to add menu items to this shop." });
+            const err = new Error("Shop not found or you do not own this shop");
+            err.statusCode = 404;
+            throw err;
         }
         const menuItem = await MenuItem.create({ name, description, price, available, shopId, photo });
         res.status(201).json({ message: "Menu item added successfully", menuItem });
     }
     catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 }
 
@@ -24,10 +28,14 @@ const fetchMenuItems = async (req, res) => {
         const { shopId } = req.params;  
         const menuItems = await MenuItem.find({ shopId });
         if(menuItems.length !== 0) res.status(200).json(menuItems);
-        else res.status(404).json({message: "No menu items exist for this shop!"})  
+        else {
+            const err = new Error("No menu items exist for this shop");
+            err.statusCode = 404;
+            throw err;
+        }  
     }
-    catch {
-        res.status(500).json({message: "Internal Server Error"});
+    catch (error) {
+        next(error);
     }
 }
 
@@ -37,8 +45,8 @@ const searchMenuItems = async (req, res) => {
         const menuItems = await MenuItem.find({ name: { $regex: search, $options: 'i' } });
         res.status(200).json(menuItems);
     }
-    catch {
-        res.status(500).json({ message: "Internal Server Error" });
+    catch (error) {
+        next(error);
     }
 }
 

@@ -3,7 +3,9 @@ import { Shop } from "../models/shop.model.js"
 const createShop = async (req,res) => {
     try{
         if(req.user.role !== "shop_owner") {
-            return res.status(403).json({ message: "Only shop owners can create shops" });
+            const err = new Error("Only shop owners can create shops");
+            err.statusCode = 403;
+            throw err;
         }
         const { shopName, location } = req.body;
         const shop = await Shop.create({
@@ -14,7 +16,7 @@ const createShop = async (req,res) => {
         res.status(201).json({ message: "Shop created successfully", shop });
     }
     catch(error) {
-        res.status(500).json({ message: "Internal server error"});
+        next(error);
     }
 }
 
@@ -24,8 +26,8 @@ const fetchShops = async (req,res) => {
         if(shops.length !== 0) res.status(200).json(shops);
         else res.json({message: "No shops exist!"})
     }
-    catch {
-        res.status(500).json({message: "Internal Server Error"});
+    catch(error) {
+        next(error);
     }
 }
 
@@ -34,9 +36,9 @@ const getNearbyShops = async (req, res) => {
         const { lng, lat, distance } = req.query;
 
         if (!lng || !lat) {
-            return res.status(400).json({
-                message: "Please provide lng and lat"
-            });
+            const err = new Error("Longitude and latitude are required");
+            err.statusCode = 400;
+            throw err;
         }
 
         const shops = await Shop.find({
@@ -54,19 +56,21 @@ const getNearbyShops = async (req, res) => {
         res.status(200).json(shops);
 
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" });
+        next(error);
     }
 }
 
 const getMyShops = async (req, res) => {
     try {
         if(req.user.role !== "shop_owner") {
-            return res.status(403).json({ message: "Only shop owners can view their shops" });
+            const err = new Error("Only shop owners can view their shops");
+            err.statusCode = 403;
+            throw err;
         }
         const shops = await Shop.find({ owner: req.user.userId });
         res.status(200).json(shops);
     } catch (error) {
-        res.status(500).json({ message: "Internal Server Error" });
+        next(error);
     }
 }
 

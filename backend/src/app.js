@@ -10,8 +10,10 @@ import authRouter from "./routes/auth.route.js";
 import menuItemRouter from "./routes/menuitem.route.js";
 import cartRouter from "./routes/cart.route.js";
 import orderRouter from "./routes/order.route.js";
+import errorhandler from "./middleware/error.middleware.js";
 
 app.use('/api/shops',shopRouter);
+app.use(errorhandler);
 app.use('/api/products',productRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/menuItem', menuItemRouter);

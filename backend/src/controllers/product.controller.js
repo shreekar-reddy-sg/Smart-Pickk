@@ -8,7 +8,7 @@ const createProduct = async (req,res) => {
         });
     }
     catch(error) {
-        res.status(500).json({ message: "Internal server error"});
+        next(error);
     }   
 }
 
@@ -17,10 +17,14 @@ const fetchProducts = async (req,res) => {
         const { shopId } = req.params;
         const products = await Product.find({ shop: shopId });
         if(products.length !== 0) res.status(200).json(products);
-        else res.status(404).json({message: "No products exist!"})  
+        else {
+            const err = new Error("No products exist for this shop");
+            err.statusCode = 404;
+            throw err;
+        }  
     }
     catch {
-        res.status(500).json({message: "Internal Server Error"});
+        next(error);
     }
 }
 

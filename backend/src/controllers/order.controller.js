@@ -5,7 +5,9 @@ export const updateOrderStatus = async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
     if(req.user.role !== 'shop_owner') {
-      return res.status(403).json({ message: 'Unauthorized' });
+      const err = new Error("Only shop owners can update order status");
+      err.statusCode = 403;
+      throw err;
     }
 
     const allowedTransitions = {
@@ -18,17 +20,21 @@ export const updateOrderStatus = async (req, res) => {
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      const err = new Error("Order not found");
+      err.statusCode = 404;
+      throw err;
     }
 
     if (!allowedTransitions[order.status].includes(status)) {
-      return res.status(400).json({ message: `Invalid status transition from ${order.status} to ${status}` });
+      const err = new Error(`Invalid status transition from ${order.status} to ${status}`);
+      err.statusCode = 400;
+      throw err;
     }
     order.status = status;
     await order.save();
     res.json({ message: 'Order status updated', order });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
@@ -51,16 +57,16 @@ export const getMyOrders = async (req, res) => {
       .populate("items.menuItem", "name price");
     res.status(200).json({ totalOrders, totalPages, hasNextPage, hasPrevPage, orders, page, limit });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    next(error);
   }
 };
 
 export const getAllOrders = async (req, res) => {
   try {
     if (req.user.role !== "shop_owner") {
-      return res.status(403).json({
-        message: "Only shop owners can view all orders",
-      });
+      const err = new Error("Only shop owners can view all orders");
+      err.statusCode = 403;
+      throw err;
     }
 
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -96,16 +102,16 @@ export const getAllOrders = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };
 
 export const analytics = async (req, res) => {
   try {
     if (req.user.role !== "shop_owner") {
-      return res.status(403).json({
-        message: "Only shop owners can access analytics"
-      });
+      const err = new Error("Only shop owners can access analytics");
+      err.statusCode = 403;
+      throw err;
     }
 
     const analyticsData = await Order.aggregate([
@@ -164,16 +170,16 @@ export const analytics = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };
 
 export const dailyAnalytics = async (req, res) => {
   try {
     if (req.user.role !== "shop_owner") {
-      return res.status(403).json({
-        message: "Only shop owners can access analytics"
-      });
+      const err = new Error("Only shop owners can access analytics");
+      err.statusCode = 403;
+      throw err;
     }
     const dailyRevenue = await Order.aggregate([
   {
@@ -199,16 +205,16 @@ export const dailyAnalytics = async (req, res) => {
 ]);
    res.status(200).json({ dailyRevenue });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };
 
 export const bestSellingItems = async (req, res) => {
   try {
     if (req.user.role !== "shop_owner") {
-      return res.status(403).json({
-        message: "Only shop owners can access analytics"
-      });
+      const err = new Error("Only shop owners can access analytics");
+      err.statusCode = 403;
+      throw err;
     }
 
     const bestSellers = await Order.aggregate([
@@ -242,6 +248,6 @@ export const bestSellingItems = async (req, res) => {
     res.status(200).json(bestSellers);
 
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };
