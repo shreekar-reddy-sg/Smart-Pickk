@@ -1,6 +1,6 @@
 import Order from '../models/order.model.js';
 
-export const updateOrderStatus = async (req, res) => {
+export const updateOrderStatus = async (req, res, next) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
@@ -32,13 +32,13 @@ export const updateOrderStatus = async (req, res) => {
     }
     order.status = status;
     await order.save();
-    res.json({ message: 'Order status updated', order });
+    res.json({ success: true, data: order });
   } catch (error) {
     next(error);
   }
 };
 
-export const getMyOrders = async (req, res) => {
+export const getMyOrders = async (req, res, next) => {
   try {
     if(req.user.role !== 'customer') {
       return res.status(403).json({message: 'Only customers can view their orders'});
@@ -55,13 +55,13 @@ export const getMyOrders = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate("items.menuItem", "name price");
-    res.status(200).json({ totalOrders, totalPages, hasNextPage, hasPrevPage, orders, page, limit });
+    res.status(200).json({ success: true, data: { totalOrders, totalPages, hasNextPage, hasPrevPage, orders, page, limit } });
   } catch (error) {
     next(error);
   }
 };
 
-export const getAllOrders = async (req, res) => {
+export const getAllOrders = async (req, res, next) => {
   try {
     if (req.user.role !== "shop_owner") {
       const err = new Error("Only shop owners can view all orders");
@@ -92,21 +92,21 @@ export const getAllOrders = async (req, res) => {
       .populate("user", "name email")
       .populate("items.menuItem", "name price");
 
-    res.status(200).json({
+    res.status(200).json({ success: true, data: {
       totalOrders,
       totalPages,
       currentPage: page,
       hasNextPage,
       hasPrevPage,
       orders,
-    });
+    } });
 
   } catch (error) {
     next(error);
   }
 };
 
-export const analytics = async (req, res) => {
+export const analytics = async (req, res, next) => {
   try {
     if (req.user.role !== "shop_owner") {
       const err = new Error("Only shop owners can access analytics");
@@ -159,7 +159,7 @@ export const analytics = async (req, res) => {
       }
     });
 
-    res.status(200).json({
+    res.status(200).json({ success: true, data: {
       totalOrders,
       pendingOrders,
       preparingOrders,
@@ -167,14 +167,14 @@ export const analytics = async (req, res) => {
       completedOrders,
       cancelledOrders,
       totalRevenue
-    });
+    }});
 
   } catch (error) {
     next(error);
   }
 };
 
-export const dailyAnalytics = async (req, res) => {
+export const dailyAnalytics = async (req, res, next) => {
   try {
     if (req.user.role !== "shop_owner") {
       const err = new Error("Only shop owners can access analytics");
@@ -203,13 +203,13 @@ export const dailyAnalytics = async (req, res) => {
     $sort: { _id: 1 }
   }
 ]);
-   res.status(200).json({ dailyRevenue });
+   res.status(200).json({success: true, data: { dailyRevenue } });
   } catch (error) {
     next(error);
   }
 };
 
-export const bestSellingItems = async (req, res) => {
+export const bestSellingItems = async (req, res, next) => {
   try {
     if (req.user.role !== "shop_owner") {
       const err = new Error("Only shop owners can access analytics");
@@ -245,7 +245,7 @@ export const bestSellingItems = async (req, res) => {
       { $unwind: "$menuItemDetails" }
     ]);
 
-    res.status(200).json(bestSellers);
+    res.status(200).json({ success: true, data: bestSellers });
 
   } catch (error) {
     next(error);

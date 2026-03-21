@@ -1,23 +1,27 @@
 import Cart from "../models/cart.model.js";
 import { MenuItem } from "../models/menuitem.model.js";
 
-const addToCart = async (req, res) => {
+const addToCart = async (req, res, next) => {
   const { menuItemId, quantity } = req.body;
 
   try {
     if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can add to cart." });
+      const err = new Error("Only customers can add to cart.");
+      err.statusCode = 403;
+      throw err;
     }
     const item = await MenuItem.findById(menuItemId);
     if (!item) {
-      return res.status(404).json({ message: "Menu item not found." });
+      const err = new Error("Menu item not found.");
+      err.statusCode = 404;
+      throw err;
     }
     let cart = await Cart.findOne({user: req.user.userId});
-    let existingItem = cart.items.find(i => i.menuItem.toString() === menuItemId);
     if (!cart) {
-      cart = await Cart.create({ user: req.user.userId, products: [] });
+      cart = await Cart.create({ user: req.user.userId, items: [] });
     }
-    else if (existingItem) {
+    let existingItem = cart.items.find(i => i.menuItem.toString() === menuItemId);
+    if (existingItem) {
       existingItem.quantity += quantity || 1;
       await cart.save();
     } 
@@ -25,53 +29,58 @@ const addToCart = async (req, res) => {
       cart.items.push({ menuItem: menuItemId, quantity });
       await cart.save();
     }    
-    res.status(200).json({ message: "Item added to cart successfully." });
+    res.status(200).json({ success: true, data: { message: "Item added to cart successfully." } });
 
   } catch (error) {
-    console.error("Error adding to cart:", error);
-    res.status(500).json({ message: "Internal server error" });
+     next(error);
   }
 };
 
-const getCart = async(req,res) => {
+const getCart = async(req,res,next) => {
   try {
     if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can view cart." });
+      const err = new Error("Only customers can view cart.");
+      err.statusCode = 403;
+      throw err;
     }
     let cart = await Cart.findOne({ user: req.user.userId }).populate("items.menuItem");
+    if (!cart) {
+      const err = new Error("Cart not found.");
+      err.statusCode = 404;
+      throw err;
+    }
     let total = 0;
     cart.items.forEach(item => {
       total += item.menuItem.price * item.quantity;
     });
     cart = cart.toObject();
     cart.total = total;
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found." });
-    }
-    res.status(200).json(cart);
+    res.status(200).json({ success: true, data: cart });
   }
   catch (error) {
-    console.error("GET CART ERROR:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 }
 
-const removeFromCart = async (req, res) => {
+const removeFromCart = async (req, res, next) => {
   const { menuItemId } = req.params;
   try {
     if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can remove from cart." });
+      const err = new Error("Only customers can remove from cart.");
+      err.statusCode = 403;
+      throw err;
     }
     const cart = await Cart.findOne({ user: req.user.userId });
     if (!cart) {
-      return res.status(404).json({ message: "Cart not found." });
+      const err = new Error("Cart not found.");
+      err.statusCode = 404;
+      throw err;
     }
     cart.items = cart.items.filter(item => item.menuItem.toString() !== menuItemId);
     await cart.save();
-    res.status(200).json({ message: "Item removed from cart successfully." });
+    res.status(200).json({ success: true, data: { message: "Item removed from cart successfully." } });
   } catch (error) {
-    console.error("Error removing from cart:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 }
 

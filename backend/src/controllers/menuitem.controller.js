@@ -1,7 +1,7 @@
 import { MenuItem } from "../models/menuitem.model.js";
 import { Shop } from "../models/shop.model.js";
 
-const item = async (req, res) => {
+const item = async (req, res, next) => {
     const { name, description, price, available, shopId, photo } = req.body;
     try {
         if(req.user.role !== 'shop_owner') {
@@ -16,18 +16,18 @@ const item = async (req, res) => {
             throw err;
         }
         const menuItem = await MenuItem.create({ name, description, price, available, shopId, photo });
-        res.status(201).json({ message: "Menu item added successfully", menuItem });
+        res.status(201).json({ success: true, data: menuItem });
     }
     catch (error) {
         next(error);
     }
 }
 
-const fetchMenuItems = async (req, res) => {
+const fetchMenuItems = async (req, res, next) => {
     try {
         const { shopId } = req.params;  
         const menuItems = await MenuItem.find({ shopId });
-        if(menuItems.length !== 0) res.status(200).json(menuItems);
+        if(menuItems.length !== 0) res.status(200).json({ success: true, data: menuItems });
         else {
             const err = new Error("No menu items exist for this shop");
             err.statusCode = 404;
@@ -39,11 +39,11 @@ const fetchMenuItems = async (req, res) => {
     }
 }
 
-const searchMenuItems = async (req, res) => {
+const searchMenuItems = async (req, res, next) => {
     try {
         const { search } = req.query;
         const menuItems = await MenuItem.find({ name: { $regex: search, $options: 'i' } });
-        res.status(200).json(menuItems);
+        res.status(200).json({ success: true, data: menuItems });
     }
     catch (error) {
         next(error);

@@ -1,9 +1,9 @@
 import { Product } from "../models/product.model.js";
 
-const createProduct = async (req,res) => {
+const createProduct = async (req,res, next) => {
     try {
         const product = await Product.create(req.body); 
-        res.status(201).json({ message: "Product created successfully",
+        res.status(201).json({ success: true,
             data: product
         });
     }
@@ -12,11 +12,11 @@ const createProduct = async (req,res) => {
     }   
 }
 
-const fetchProducts = async (req,res) => {
+const fetchProducts = async (req,res, next) => {
     try {
         const { shopId } = req.params;
         const products = await Product.find({ shop: shopId });
-        if(products.length !== 0) res.status(200).json(products);
+        if(products.length !== 0) res.status(200).json({ success: true, data: products });
         else {
             const err = new Error("No products exist for this shop");
             err.statusCode = 404;

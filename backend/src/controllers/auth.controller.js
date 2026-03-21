@@ -2,38 +2,44 @@ import bcrypt from 'bcryptjs';
 import { User } from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
+           const err = new Error("Email already in use");
+           err.statusCode = 400;
+           throw err;
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({ name, email, password: hashedPassword, role });
-        res.status(201).json({ message: "User registered successfully"});
+        res.status(201).json({ success: true, data: { message: "User registered successfully" } });
     }
     catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 }
 
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: "Invalid email or password" });
+            const err = new Error("Invalid email or password");
+            err.statusCode = 400;
+            throw err;
         }
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Invalid email or password" });
+            const err = new Error("Invalid email or password");
+            err.statusCode = 400;
+            throw err;
         }
         const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
-        res.status(200).json({ message: "Login successful", token: token });
+        res.status(200).json({ success: true, data: { message: "Login successful", token: token } });
     }   
     catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+        next(error);
     }
 }
 

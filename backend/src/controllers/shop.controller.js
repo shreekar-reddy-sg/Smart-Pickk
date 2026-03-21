@@ -1,6 +1,6 @@
 import { Shop } from "../models/shop.model.js"
 
-const createShop = async (req,res) => {
+const createShop = async (req,res, next) => {
     try{
         if(req.user.role !== "shop_owner") {
             const err = new Error("Only shop owners can create shops");
@@ -13,25 +13,29 @@ const createShop = async (req,res) => {
             location,
             owner: req.user.userId
         });
-        res.status(201).json({ message: "Shop created successfully", shop });
+        res.status(201).json({ success: true, data: shop });
     }
     catch(error) {
         next(error);
     }
 }
 
-const fetchShops = async (req,res) => {
+const fetchShops = async (req,res, next) => {
     try {
         const shops = await Shop.find();
-        if(shops.length !== 0) res.status(200).json(shops);
-        else res.json({message: "No shops exist!"})
+        if(shops.length !== 0) res.status(200).json({ success: true, data: shops });
+        else {
+            const err = new Error("No shops found");
+            err.statusCode = 404;
+            throw err;
+        }
     }
     catch(error) {
         next(error);
     }
 }
 
-const getNearbyShops = async (req, res) => {
+const getNearbyShops = async (req, res, next) => {
     try {
         const { lng, lat, distance } = req.query;
 
@@ -53,14 +57,14 @@ const getNearbyShops = async (req, res) => {
             }
         });
 
-        res.status(200).json(shops);
+        res.status(200).json({ success: true, data: shops });
 
     } catch (error) {
         next(error);
     }
 }
 
-const getMyShops = async (req, res) => {
+const getMyShops = async (req, res, next) => {
     try {
         if(req.user.role !== "shop_owner") {
             const err = new Error("Only shop owners can view their shops");
@@ -68,7 +72,7 @@ const getMyShops = async (req, res) => {
             throw err;
         }
         const shops = await Shop.find({ owner: req.user.userId });
-        res.status(200).json(shops);
+        res.status(200).json({ success: true, data: shops });
     } catch (error) {
         next(error);
     }
