@@ -2,32 +2,44 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
-const Login = () => {
+const Register = () => {
+
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handleLogin = async (e) => {
-    e.preventDefault(); // stop page reload
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:4000/api/auth/login", {
+      const res = await axios.post("http://localhost:4000/api/auth/register", {
+        name,
         email,
         password
       });
-      localStorage.setItem("token", res.data.token);
 
-      alert("Login successful");
+      alert("Registered successfully");
 
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      alert(error.response?.data?.message || "Registration failed");
     }
   };
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
       
-      <form onSubmit={handleLogin} style={{ border: "1px solid black", padding: "20px" }}>
+      <form onSubmit={handleRegister} style={{ border: "1px solid black", padding: "20px" }}>
         
-        <h2>Login</h2>
+        <h2>Register</h2>
+
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <br /><br />
 
         <input
           type="email"
@@ -47,13 +59,16 @@ const Login = () => {
 
         <br /><br />
 
-        <button type="submit">Login</button>
-        <br /><br />
-        <Link to="/register">Don't have an account? Register here</Link>
+        <button type="submit">Register</button>
+
+        <p>
+          Already have an account? <Link to="/">Login</Link>
+        </p>
+
       </form>
 
     </div>
   );
 };
 
-export default Login;
+export default Register;
