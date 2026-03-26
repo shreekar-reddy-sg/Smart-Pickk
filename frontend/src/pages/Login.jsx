@@ -13,7 +13,7 @@ const Login = () => {
         email,
         password
       });
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", res.data.data.token);
 
       alert("Login successful");
 
